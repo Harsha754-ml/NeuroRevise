@@ -1,0 +1,84 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "url": "http://127.0.0.1:8000/reports/revision-progress",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "a1fd7375-48c7-469a-943e-ce46a0268c13",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = items[0].json;\n\nconst completed = data.completed;\nconst total = data.total;\nconst lessons = data.lessons;\n\nlet lessonText = \"\";\n\nfor (let l of lessons) {\n  lessonText += `- ${l.name}: ${l.status}\\n`;\n}\n\nreturn [\n  {\n    json: {\n      subject: \"Daily Revision Summary\",\n      message: `You completed ${completed}/${total} revisions today.\\n\\nDetails:\\n${lessonText}`\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "dd6dbb89-ae8d-46af-9391-03c612096aa9",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "fromEmail": "codenexcoding@gmail.com",
+        "toEmail": "codenexcoding@gmail.com",
+        "subject": "={{$json[\"subject\"]}}",
+        "html": "={{$json[\"message\"]}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "ba34f3e6-e1f0-429f-9f91-047935078e38",
+      "name": "Send an Email",
+      "webhookId": "a3b41027-22fa-41a0-bbe7-bc05637ddc5a",
+      "credentials": {
+        "smtp": {
+          "id": "WenHjraRrAG541oL",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "aaf5e8bdc87b57f0c84ff5da0a0b89c43571c80ed0611b96c6fdf85178dc11b4"
+  }
+}

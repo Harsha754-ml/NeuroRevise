@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "291778225200",
+    "project_id": "android-1e470",
+    "storage_bucket": "android-1e470.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:291778225200:android:787dff19b67755725b39f5",
+        "android_client_info": {
+          "package_name": "com.example.memory_forge"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC3dvWVivAQ97yyKNCPEgBQn1X97p289bU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

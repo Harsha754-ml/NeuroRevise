@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
-import { Activity, Brain, Server, RefreshCw, Layers, ShieldCheck, Zap, AlertTriangle, Terminal, Upload, Link, Type, Send, CheckCircle2, X as CloseIcon, Clock, Sparkles, User, Database, Globe, Cpu } from 'lucide-react';
+import { Activity, Brain, Server, RefreshCw, Layers, ShieldCheck, Zap, AlertTriangle, Terminal, Upload, Link, Type, Send, CheckCircle2, X as CloseIcon, Clock, Sparkles, User, Database, Globe, Cpu, Play, Square, Trash2 } from 'lucide-react';
 
-const API_BASE = "http://127.0.0.1:8000";
-const WS_URL = "ws://127.0.0.1:8000/ws";
+const API_BASE = `http://${window.location.hostname}:8000`;
+const WS_URL = `ws://${window.location.hostname}:8000/ws`;
 
 // HUMANLY HELPER COMPONENTS
 const StatusCard = ({ label, value, icon, sub, urgency }) => (
@@ -68,11 +68,15 @@ const MOCK_TREND = [
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'];
 
+
+
+
+
 function App() {
   const [data, setData] = useState({
     flashcards: [],
     events: [],
-    dashboard: { total_cards: 0, critical_cards: 0, warning_cards: 0, active_plans: 0, demo_mode: false }
+    dashboard: { total_cards: 0, critical_cards: 0, warning_cards: 0, active_plans: 0, demo_mode: false, presentation_mode: false }
   });
   const [isConnected, setIsConnected] = useState(false);
   const [ingestType, setIngestType] = useState('text');
@@ -84,6 +88,15 @@ function App() {
   const [topicName, setTopicName] = useState('');
   const [textContent, setTextContent] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [targetCompletionAt, setTargetCompletionAt] = useState('');
+  const [reportEmail, setReportEmail] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeGame, setActiveGame] = useState(null);
+  const [gameSession, setGameSession] = useState(null);
+  const [gameLoading, setGameLoading] = useState(false);
+  const [gameStats, setGameStats] = useState({ stats: {}, points: 0 });
+  const [speakingId, setSpeakingId] = useState(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -94,9 +107,19 @@ function App() {
       ws.onmessage = (event) => {
         try {
           const parsed = JSON.parse(event.data);
-          setData(parsed);
-          setSimulationMode(parsed.flashcards.length === 0);
-        } catch(e) {}
+          // Defensive check to prevent crash if backend sends incomplete data
+          if (parsed && Array.isArray(parsed.flashcards)) {
+            setData(parsed);
+            if (parsed.game_stats && parsed.neuro_points !== undefined) {
+               setGameStats({ stats: parsed.game_stats, points: parsed.neuro_points });
+            }
+            setSimulationMode(parsed.flashcards.length === 0);
+          } else {
+            console.warn("⚠️ Received Malformed Data from Relay:", parsed);
+          }
+        } catch(e) {
+          console.error("❌ Signal Extraction Failed:", e);
+        }
       };
       ws.onclose = () => {
         setIsConnected(false);
@@ -105,6 +128,27 @@ function App() {
       };
     };
     connect();
+    
+    // Fetch game stats
+    const fetchStats = async () => {
+      try {
+        const resp = await fetch(`${API_BASE}/game/stats`);
+        const d = await resp.json();
+        setGameStats(d);
+      } catch(e) {}
+    };
+    fetchStats();
+
+    const fetchReportEmail = async () => {
+      try {
+        const resp = await fetch(`${API_BASE}/settings/report-email`);
+        if (!resp.ok) return;
+        const d = await resp.json();
+        setReportEmail(d?.email || '');
+      } catch (e) {}
+    };
+    fetchReportEmail();
+
     return () => { if (ws) ws.close(); };
   }, []);
 
@@ -113,11 +157,30 @@ function App() {
      return (data.learning_plans || []).find(p => p.topic_id === topicId);
   };
 
-  const playAudioSummary = (text) => {
+  const playAudioSummary = (id, text) => {
+     if (speakingId === id) {
+        window.speechSynthesis.cancel();
+        setSpeakingId(null);
+        return;
+     }
+
+     window.speechSynthesis.cancel();
      if (!text) return;
+
      const utter = new SpeechSynthesisUtterance(text);
+     
+     // Attempt to grab a male voice if available (sometimes browser specific)
+     const voices = window.speechSynthesis.getVoices();
+     const maleVoice = voices.find(v => v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('guy'));
+     if (maleVoice) utter.voice = maleVoice;
+     
      utter.rate = 0.9;
-     utter.pitch = 1.0;
+     utter.pitch = 0.6; // Deepen the tone to sound more masculine
+     
+     utter.onend = () => setSpeakingId(null);
+     utter.onerror = () => setSpeakingId(null);
+     
+     setSpeakingId(id);
      window.speechSynthesis.speak(utter);
   };
 
@@ -138,8 +201,53 @@ function App() {
     if (simulationMode) {
       return { total: 124, safe: 88, critical: 12 };
     }
-    return { total: data.dashboard.total_cards, safe: data.dashboard.safe_cards, critical: data.dashboard.critical_cards };
+    return { total: data.dashboard.total_cards, safe: data.dashboard.total_cards - data.dashboard.critical_cards - data.dashboard.warning_cards, critical: data.dashboard.critical_cards };
   }, [simulationMode, data.dashboard]);
+
+  const startGame = async (type) => {
+    setGameLoading(true);
+    try {
+      const resp = await fetch(`${API_BASE}/game/start/${type}`);
+      const session = await resp.json();
+      if (session.error) {
+        alert(session.error);
+        return;
+      }
+      setGameSession(session);
+      setActiveGame(type);
+    } catch(e) {
+      alert("Signal Lost: Cannot start the arena.");
+    } finally {
+      setGameLoading(false);
+    }
+  };
+
+  const submitScore = async (type, score, result = null) => {
+    try {
+      const payload = { score };
+      if (result !== null && result !== undefined) payload.result = result;
+
+      const resp = await fetch(`${API_BASE}/game/score/${type}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!resp.ok) return;
+
+      const d = await resp.json();
+      setGameStats(prev => ({ ...prev, points: d.points, stats: { ...prev.stats, [type]: d.stats } }));
+      // hard-refresh stats from server so NP never gets visually stale
+      try {
+        const latestResp = await fetch(`${API_BASE}/game/stats`);
+        if (latestResp.ok) {
+          const latest = await latestResp.json();
+          setGameStats(latest);
+        }
+      } catch (_) {}
+      setActiveGame(null);
+      setGameSession(null);
+    } catch(e) {}
+  };
 
   const handleIngest = async (e) => {
     e.preventDefault();
@@ -158,7 +266,15 @@ function App() {
     }
     
     if (ingestType === 'file' && (!fileInputRef.current?.files || fileInputRef.current.files.length === 0)) {
-      return alert("⚠️ File Missing: Please select a .pdf or .txt document to transmit.");
+      return alert('File missing: select a .pdf or .txt file.');
+    }
+
+    if (ingestType === 'file') {
+      const file = fileInputRef.current.files[0];
+      const lowerName = (file?.name || '').toLowerCase();
+      if (!(lowerName.endsWith('.pdf') || lowerName.endsWith('.txt'))) {
+        return alert('Unsupported format: only .pdf and .txt are allowed.');
+      }
     }
 
     setIngestLoading(true);
@@ -172,13 +288,15 @@ function App() {
       if (ingestType === 'file') {
         body = new FormData();
         body.append('topic_name', topicName);
+        if (targetCompletionAt) body.append('target_completion_at', String(Date.parse(targetCompletionAt) / 1000));
         body.append('file', fileInputRef.current.files[0]);
         // Note: fetch automatically sets multipart/form-data boundary
       } else {
         headers = { 'Content-Type': 'application/json' };
         body = JSON.stringify({ 
           topic_name: topicName, 
-          [ingestType === 'text' ? 'text' : 'url']: ingestType === 'text' ? textContent : youtubeUrl 
+          [ingestType === 'text' ? 'text' : 'url']: ingestType === 'text' ? textContent : youtubeUrl,
+          target_completion_at: targetCompletionAt ? (Date.parse(targetCompletionAt) / 1000) : null
         });
       }
 
@@ -189,7 +307,18 @@ function App() {
         body: body
       });
 
-      const responseData = await response.json();
+      let responseData = {};
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        responseData = await response.json();
+      } else {
+        const raw = await response.text();
+        try {
+          responseData = raw ? JSON.parse(raw) : {};
+        } catch (_) {
+          responseData = { detail: raw || 'Unexpected server response' };
+        }
+      }
 
       if (response.ok) {
         console.log("Ingestion successful:", responseData);
@@ -198,6 +327,7 @@ function App() {
         setTopicName('');
         setTextContent('');
         setYoutubeUrl('');
+        setTargetCompletionAt('');
         if (fileInputRef.current) fileInputRef.current.value = '';
         
         // Disable simulation once real data is present
@@ -210,10 +340,433 @@ function App() {
       }
     } catch (err) {
       console.error("Network Exception:", err);
-      alert(`❌ Connection Timeout: Could not reach the MemoryForge server at ${API_BASE}. Ensure "uvicorn main:app" is running on your laptop.`);
+      alert(`Upload failed: ${err?.message || 'Unable to process upload request.'}`);
     } finally {
       setIngestLoading(false);
     }
+  };
+
+  const handleTogglePresentation = async (enabled) => {
+     setData(prev => ({
+       ...prev,
+       dashboard: { ...(prev.dashboard || {}), presentation_mode: enabled }
+     }));
+
+     try {
+        const resp = await fetch(`${API_BASE}/settings/presentation-mode`, {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ enabled })
+        });
+        if (!resp.ok) {
+          throw new Error('Failed to save presentation mode');
+        }
+     } catch (e) {
+        console.error("Toggle Failed:", e);
+        setData(prev => ({
+          ...prev,
+          dashboard: { ...(prev.dashboard || {}), presentation_mode: !enabled }
+        }));
+     }
+  };
+
+  const handleSaveReportEmail = async () => {
+     const email = reportEmail.trim();
+     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+       alert('Please enter a valid email address.');
+       return;
+     }
+
+     setSavingEmail(true);
+     try {
+       const resp = await fetch(`${API_BASE}/settings/report-email`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ email })
+       });
+       const d = await resp.json();
+       if (!resp.ok) {
+         alert(`Failed to save email: ${d?.detail || 'Unknown error'}`);
+         return;
+       }
+       alert(email ? 'Report email saved. Daily reports will use this email.' : 'Report email cleared.');
+       setData(prev => ({
+         ...prev,
+         dashboard: { ...(prev.dashboard || {}), report_email: email }
+       }));
+     } catch (e) {
+       alert('Failed to save report email. Check backend connection.');
+     } finally {
+       setSavingEmail(false);
+     }
+  };
+
+  const scrollToSection = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const handlePanicMode = async () => {
+    const realCards = (data.flashcards || []).filter((c) => c?.id && !String(c.id).startsWith('m'));
+    if (!realCards.length) {
+      alert('No real cards found yet. Upload content first.');
+      return;
+    }
+
+    const sorted = [...realCards].sort((a, b) => (a.retention_score ?? 100) - (b.retention_score ?? 100));
+    const target = sorted[0];
+    try {
+      const res = await fetch(`${API_BASE}/notifications/trigger-manual/${target.id}`, { method: 'POST' });
+      if (!res.ok) throw new Error('panic trigger failed');
+      alert(`Panic mode triggered for: ${target.topic_name}`);
+    } catch (e) {
+      alert('Panic mode failed. Check backend connection.');
+    }
+  };
+
+  const handleAIChatQuick = async () => {
+    const question = window.prompt('Ask AI Chat (from your uploaded notes/PDF):');
+    if (!question || !question.trim()) return;
+
+    try {
+      const resp = await fetch(`${API_BASE}/ai/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: question.trim(), top_k: 5 })
+      });
+
+      const d = await resp.json();
+      if (!resp.ok) {
+        alert(`AI chat failed: ${d?.detail || 'Unknown error'}`);
+        return;
+      }
+
+      let sources = '';
+      if (Array.isArray(d.sources) && d.sources.length) {
+        sources = `\n\nSources: ${d.sources.join(', ')}`;
+      }
+      alert(`AI Chat\n\n${d.answer || 'No answer generated.'}${sources}`);
+    } catch (e) {
+      alert('AI chat unavailable. Check backend connection.');
+    }
+  };
+
+
+  // -----------------
+  // GAME COMPONENTS
+  // -----------------
+  const GameHub = () => (
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex justify-between items-end">
+        <div>
+          <h2 className="text-5xl font-black tracking-tighter text-[#f4f1ea] mb-2 uppercase">Game Mode</h2>
+          <p className="text-slate-500 font-serif italic text-lg">Hone your retrieval capabilities across 5 distinct simulations.</p>
+        </div>
+        <div className="bg-[#1a1a1c] border border-white/5 rounded-2xl px-6 py-4 flex items-center gap-4 shadow-2xl">
+           <Cpu className="text-[#c5a059]" />
+           <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 leading-none mb-1">Total Reward</p>
+              <p className="text-2xl font-black text-[#c5a059] leading-none">{gameStats.points} NP</p>
+           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
+        {[
+          { id: 'rapid_fire', name: 'Rapid Fire', desc: 'Quick Q&A under extreme time pressure', diff: 'Medium', color: 'bg-rose-500' },
+          { id: 'match_cards', name: 'Match Cards', desc: 'Spatially link concepts to their definitions', diff: 'Easy', color: 'bg-sky-500' },
+          { id: 'weak_spot', name: 'Weak Spot Drill', desc: 'Surgical focus on your most decayed nodes', diff: 'Hard', color: 'bg-amber-500' },
+          { id: 'battle_mode', name: 'Battle Mode', desc: 'Compete against the machine-mind (NeuroBot)', diff: 'Medium', color: 'bg-indigo-500' },
+          { id: 'panic_game', name: 'Panic Game', desc: 'Sub-second retrieval simulation', diff: 'Extreme', color: 'bg-emerald-500' }
+        ].map(g => (
+          <div key={g.id} 
+               onClick={() => startGame(g.id)}
+               className="group bg-[#0f0f11] border border-white/5 rounded-[2rem] p-8 flex items-center justify-between hover:border-white/10 hover:bg-[#151518] transition-all cursor-pointer">
+            <div className="flex items-center gap-8">
+              <div className={`p-6 rounded-3xl ${g.color}/10 text-white group-hover:scale-110 transition-transform`}>
+                <Zap size={32} className={`${g.color.replace('bg-', 'text-')}`} />
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-[#f4f1ea] tracking-tight mb-1">{g.name}</h3>
+                <p className="text-slate-500 italic text-sm font-serif">{g.desc}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6">
+              <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${g.color}/20 ${g.color.replace('bg-', 'text-')} border border-white/5`}>
+                {g.diff}
+              </span>
+              <div className="p-3 bg-white/5 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                <Play size={16} />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const GameOverlay = () => {
+    const [currentStep, setCurrentStep] = useState(0);
+    const [score, setScore] = useState(0);
+    const [matches, setMatches] = useState([]);
+    const [selection, setSelection] = useState(null);
+    const [streak, setStreak] = useState(0);
+    const [ansStatus, setAnsStatus] = useState(null); // 'correct' | 'wrong' | null
+    const [botProgress, setBotProgress] = useState(0);
+    const [startTime] = useState(Date.now());
+
+    useEffect(() => {
+      if (activeGame === 'battle_mode' && gameSession) {
+        const interval = setInterval(() => {
+          setBotProgress(p => Math.min(p + (gameSession.bot_params.speed / 2), 100));
+        }, 1000);
+        return () => clearInterval(interval);
+      }
+    }, [activeGame, gameSession]);
+
+    if (!gameSession) return null;
+
+    const handleOptionSelect = (option) => {
+      if (ansStatus) return;
+      
+      const isCorrect = option === (gameSession.mode === 'match' ? '' : gameSession.cards[currentStep].answer);
+      setAnsStatus(isCorrect ? 'correct' : 'wrong');
+
+      let pointsEarned = 0;
+      if (isCorrect) {
+        const timeElapsed = (Date.now() - startTime) / 1000;
+        const speedBonus = Math.max(0, Math.floor(50 - timeElapsed));
+        const streakBonus = streak * 10;
+        pointsEarned = 50 + speedBonus + streakBonus;
+        setScore(s => s + pointsEarned);
+        setStreak(s => s + 1);
+      } else {
+        setStreak(0);
+      }
+
+      setTimeout(() => {
+        setAnsStatus(null);
+        if (currentStep < gameSession.cards.length - 1) {
+          setCurrentStep(s => s + 1);
+        } else {
+          submitScore(activeGame, score + pointsEarned);
+        }
+      }, 600);
+    };
+
+    if (activeGame === 'match_cards') {
+      const handleMatch = (item) => {
+        if (!selection) {
+          setSelection(item);
+        } else {
+          if (selection.id !== item.id && selection.match_id === item.match_id) {
+            setMatches([...matches, selection.match_id]);
+            const isFinalPair = matches.length + 1 === gameSession.pairs.length / 2;
+            setScore(prev => {
+              const nextScore = prev + 25;
+              if (isFinalPair) {
+                setTimeout(() => submitScore('match_cards', nextScore), 1000);
+              }
+              return nextScore;
+            });
+          }
+          setSelection(null);
+        }
+      };
+
+      return (
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-12 overflow-y-auto">
+           <button onClick={() => { setActiveGame(null); setGameSession(null); }} className="absolute top-12 right-12 text-slate-500 hover:text-white transition-colors">
+              <CloseIcon size={48} />
+           </button>
+           
+           <div className="mb-12 text-center">
+             <h2 className="text-6xl font-black text-white tracking-tighter uppercase mb-4">Neural Mapping</h2>
+             <p className="text-sky-400 font-mono tracking-widest text-xl">Score: {score} NP</p>
+           </div>
+
+           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl w-full pb-12">
+              {gameSession.pairs.map(p => {
+                const isMatched = matches.includes(p.match_id);
+                const isSelected = selection?.id === p.id;
+                return (
+                  <div 
+                    key={p.id}
+                    onClick={() => !isMatched && handleMatch(p)}
+                    className={`h-40 rounded-[2rem] p-6 flex items-center justify-center text-center cursor-pointer transition-all border-2
+                      ${isMatched ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 opacity-40 scale-95' : 
+                        isSelected ? 'bg-[#c5a059] border-white text-white rotate-2 scale-105' : 
+                        'bg-[#1a1a1c] border-white/5 text-slate-300 hover:border-white/20'}
+                    `}
+                  >
+                    <p className="font-serif italic text-base leading-tight">{p.text}</p>
+                  </div>
+                );
+              })}
+           </div>
+        </div>
+      );
+    }
+
+    const currentCard = gameSession.cards[currentStep];
+    const isBattle = activeGame === 'battle_mode';
+    const isPanic = activeGame === 'panic_game';
+
+    return (
+      <div className={`fixed inset-0 z-[100] transition-colors duration-500 flex flex-col items-center justify-center p-12
+        ${ansStatus === 'correct' ? 'bg-emerald-950/90' : ansStatus === 'wrong' ? 'bg-rose-950/90' : 'bg-black/95'} backdrop-blur-xl`}>
+         <button onClick={() => { setActiveGame(null); setGameSession(null); }} className="absolute top-12 right-12 text-slate-500 hover:text-white transition-colors">
+            <CloseIcon size={48} />
+         </button>
+
+         <div className="max-w-4xl w-full">
+            <div className="flex justify-between items-end mb-12">
+               <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <p className={`${isPanic ? 'text-rose-500 animate-pulse' : 'text-[#c5a059]'} font-black uppercase tracking-[0.2em] text-sm`}>
+                      {activeGame.replace('_', ' ')} Simulation
+                    </p>
+                    {streak > 1 && (
+                      <span className="bg-[#c5a059] text-black text-[10px] font-black px-2 py-0.5 rounded-full animate-bounce">
+                        STREAK {streak}x
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="text-4xl font-black text-white tracking-tighter uppercase">Neural Link {currentStep + 1} / {gameSession.cards.length}</h2>
+               </div>
+               <div className="text-right">
+                  <p className="text-slate-500 text-xs font-black uppercase mb-1">Total Harvest</p>
+                  <p className="text-3xl font-black text-[#c5a059]">{score} NP</p>
+               </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              <div className={`${isBattle ? 'lg:col-span-8' : 'lg:col-span-12'} bg-[#0f0f11] border border-white/5 rounded-[3rem] p-12 shadow-2xl relative overflow-hidden`}>
+                 <div className={`absolute top-0 left-0 h-1.5 ${isPanic ? 'bg-rose-500' : 'bg-[#c5a059]'} transition-all duration-300`} 
+                      style={{ width: `${((currentStep + 1) / gameSession.cards.length) * 100}%` }} />
+                 
+                 <div className="flex justify-between items-start mb-8">
+                    <p className="text-sm text-slate-500 font-serif italic">Origin: {currentCard.subject || currentCard.topic_name}</p>
+                    {isPanic && (
+                        <div className="flex items-center gap-2 text-rose-500 font-black animate-pulse">
+                           <Zap size={16} />
+                           <span className="text-[10px] tracking-widest uppercase">Panic Signal</span>
+                        </div>
+                    )}
+                 </div>
+
+                 <h3 className="text-3xl font-black text-[#f4f1ea] leading-tight mb-12 min-h-[120px] flex items-center">
+                    {currentCard.question}
+                 </h3>
+                 
+                 <div className="grid grid-cols-2 gap-4">
+                    {(currentCard.options || [currentCard.answer, "Error A", "Error B", "Error C"]).map((opt, idx) => (
+                      <button 
+                        key={idx}
+                        onClick={() => handleOptionSelect(opt)}
+                        disabled={!!ansStatus}
+                        className={`p-6 rounded-2xl text-left transition-all border-2 group
+                          ${ansStatus && opt === currentCard.answer ? 'bg-emerald-500 border-white text-white' : 
+                            ansStatus && opt !== currentCard.answer ? 'bg-rose-950/50 border-rose-500/20 text-rose-500 opacity-50' :
+                            'bg-white/5 border-white/5 text-slate-300 hover:border-white/20 hover:bg-white/10'}
+                        `}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-lg">{opt}</span>
+                          <div className={`w-6 h-6 rounded-full border border-white/20 flex items-center justify-center transition-all
+                            ${ansStatus && opt === currentCard.answer ? 'bg-white text-emerald-500 border-white' : 'group-hover:border-white'}`}>
+                            {ansStatus && opt === currentCard.answer ? '✓' : idx + 1}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                 </div>
+              </div>
+
+              {isBattle && (
+                <div className="lg:col-span-4 space-y-4">
+                  <div className="bg-[#1a1a1c] border border-white/5 rounded-[2.5rem] p-8 text-center shadow-xl">
+                    <div className={`w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center border-4 transition-all
+                      ${botProgress > ((currentStep / gameSession.cards.length) * 100) ? 'bg-rose-500/20 border-rose-500 animate-pulse' : 'bg-indigo-500/20 border-indigo-500'}`}>
+                      <Cpu size={32} className={botProgress > ((currentStep / gameSession.cards.length) * 100) ? 'text-rose-500' : 'text-indigo-400'} />
+                    </div>
+                    <h4 className="text-xl font-black text-white uppercase tracking-tighter mb-2">Protocol: NeuroBot</h4>
+                    <p className="text-slate-500 font-mono text-[10px] uppercase tracking-[0.2em] mb-6">Threat Level: Calculated</p>
+                    
+                    <div className="space-y-4">
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
+                          <span>Machine Progress</span>
+                          <span className="text-indigo-400">{Math.round(botProgress)}%</span>
+                        </div>
+                        <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: `${botProgress}%` }} />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
+                          <span>Human Progress</span>
+                          <span className="text-[#c5a059]">{Math.round((currentStep / gameSession.cards.length) * 100)}%</span>
+                        </div>
+                        <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-full bg-[#c5a059] transition-all duration-300" style={{ width: `${(currentStep / gameSession.cards.length) * 100}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-[#0f0f11] border border-white/5 rounded-2xl p-6 italic font-serif text-slate-500 text-sm leading-relaxed border-l-4 border-l-indigo-500">
+                    "Cognitive baseline detected. Initiating competitive neural restructuring."
+                  </div>
+                </div>
+              )}
+            </div>
+         </div>
+      </div>
+    );
+  };
+
+
+  const handleDeleteLesson = async (topicName) => {
+    if (!topicName) return;
+    const ok = window.confirm(`Delete lesson "${topicName}"? This will remove all uploaded cards for this topic.`);
+    if (!ok) return;
+
+    try {
+      const resp = await fetch(`${API_BASE}/lesson?topic_name=${encodeURIComponent(topicName)}`, { method: 'DELETE' });
+      const d = await resp.json();
+      if (!resp.ok) {
+        alert(`Delete failed: ${d?.detail || 'Unknown error'}`);
+        return;
+      }
+
+      setData((prev) => ({
+        ...prev,
+        flashcards: (prev.flashcards || []).filter((f) => f.topic_name !== topicName),
+      }));
+      alert(`Deleted lesson: ${topicName}`);
+    } catch (e) {
+      alert('Delete failed. Check backend connection.');
+    }
+  };
+  const handleManualTrigger = async (cardId) => {
+     // Handle Simulation Mode / Mock IDs
+     if (cardId && cardId.toString().startsWith('m')) {
+        return alert("⚡ Synaptic Pulse Simulated: Signal sent to virtual neural link (Simulation Mode). Upload real data to trigger actual devices.");
+     }
+
+     try {
+        const res = await fetch(`${API_BASE}/notifications/trigger-manual/${cardId}`, { method: 'POST' });
+        const resData = await res.json();
+        if (res.ok) {
+           alert("⚡ Synaptic Pulse Transmitted: Signal sent to mobile device.");
+        } else {
+           alert("❌ Transmission Failed: " + (resData.detail || "Unknown error"));
+        }
+     } catch (e) {
+        console.error("Manual Trigger Failed:", e);
+        alert("❌ Transmission Error: Could not reach the NeuroRevise server.");
+     }
   };
 
   return (
@@ -227,8 +780,8 @@ function App() {
                  <Brain className="w-6 h-6 text-black" />
               </div>
               <div>
-                 <h1 className="text-2xl font-bold font-serif text-[#c5a059] tracking-tight">MemoryForge</h1>
-                 <p className="text-[10px] font-black tracking-[0.3em] text-[#8da290] uppercase">Human_Synapse v2</p>
+                 <h1 className="text-2xl font-bold font-serif text-[#c5a059] tracking-tight">NeuroRevise</h1>
+                 <p className="text-[11px] text-[#8da290] tracking-[0.08em] leading-relaxed max-w-[220px]">AI-powered study companion. Learn smarter, stress less.</p>
               </div>
            </div>
 
@@ -241,6 +794,68 @@ function App() {
                  {isConnected ? 'Relay Established' : 'Link Connection Pending'}
               </p>
            </div>
+
+           {/* PRESENTATION MODE TOGGLE */}
+           <div className="p-6 rounded-[2rem] border border-[#c5a059]/10 bg-black/40 mb-8">
+              <div className="flex items-center justify-between mb-4">
+                 <div className="flex items-center gap-3">
+                    <Cpu className="w-3.5 h-3.5 text-[#c5a059]" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Presentation Mode</span>
+                 </div>
+                 <button 
+                    onClick={() => handleTogglePresentation(!data.dashboard?.presentation_mode)}
+                    className={`w-10 h-5 rounded-full transition-all relative ${data.dashboard?.presentation_mode ? 'bg-[#c5a059]' : 'bg-slate-800'}`}
+                 >
+                    <div className={`absolute top-1 w-3 h-3 rounded-full bg-black transition-all ${data.dashboard?.presentation_mode ? 'left-6' : 'left-1'}`} />
+                 </button>
+              </div>
+              <p className="text-[11px] text-slate-500 font-serif italic leading-relaxed">
+                 Triggers reminder checks every 3 and 7 minutes during presentation mode.
+              </p>
+           </div>
+
+           {/* MAIL SECTION */}
+           <div className="p-6 rounded-[2rem] border border-[#8da290]/20 bg-black/40 mb-8">
+              <div className="flex items-center gap-3 mb-4">
+                 <Send className="w-3.5 h-3.5 text-[#8da290]" />
+                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Daily Report Mail</span>
+              </div>
+              <div className="space-y-3">
+                 <input
+                    type="email"
+                    value={reportEmail}
+                    onChange={(e) => setReportEmail(e.target.value)}
+                    placeholder="student@example.com"
+                    className="w-full bg-[#0f0f11] border border-white/5 rounded-2xl px-4 py-3 text-[11px] text-[#f4f1ea] placeholder-slate-600 focus:border-[#8da290]/40 outline-none transition-all"
+                 />
+                 <button
+                    type="button"
+                    onClick={handleSaveReportEmail}
+                    disabled={savingEmail}
+                    className={`w-full rounded-2xl px-4 py-3 text-[10px] font-black tracking-[0.2em] transition-all ${savingEmail ? 'bg-slate-900 text-slate-600 cursor-not-allowed' : 'bg-[#8da290]/20 text-[#8da290] border border-[#8da290]/30 hover:bg-[#8da290]/30'}`}
+                 >
+                    {savingEmail ? 'SAVING...' : 'SAVE MAIL'}
+                 </button>
+              </div>
+           </div>
+
+           {/* NAVIGATION */}
+           <nav className="space-y-4 mb-12">
+              <button 
+                 onClick={() => setActiveTab('dashboard')}
+                 className={`w-full flex items-center gap-6 px-10 py-6 rounded-[2rem] transition-all duration-500 font-black uppercase tracking-widest text-xs border ${activeTab === 'dashboard' ? 'bg-[#c5a059] text-black border-[#c5a059] shadow-gold' : 'text-slate-500 hover:text-white border-white/5'}`}
+              >
+                 <Activity size={18} />
+                 Dashboard
+              </button>
+              <button 
+                  onClick={() => setActiveTab('games')}
+                  className={`w-full flex items-center gap-6 px-10 py-6 rounded-[2rem] transition-all duration-500 font-black uppercase tracking-widest text-xs border ${activeTab === 'games' ? 'bg-[#c5a059] text-black border-[#c5a059] shadow-gold' : 'text-slate-500 hover:text-white border-white/5'}`}
+               >
+                  <Zap size={18} />
+                  Game Mode
+               </button>
+           </nav>
         </div>
 
         <div className="px-8 flex items-center gap-2 mb-4 group cursor-default">
@@ -283,7 +898,7 @@ function App() {
                     <Sparkles className="w-5 h-5 animate-pulse" />
                     <span className="text-[11px] font-black uppercase tracking-[0.3em]">Cognitive Pulse</span>
                  </div>
-                 <h2 className="text-7xl font-black text-[#f4f1ea] font-serif tracking-tighter leading-none">The Knowledge <br/><span className="text-[#8da290] italic">Canvas.</span></h2>
+                 <h2 className="text-7xl font-black text-[#f4f1ea] font-serif tracking-tighter leading-none">NeuroRevise</h2>
               </div>
               
               <div className="flex items-center gap-10">
@@ -301,8 +916,10 @@ function App() {
               </div>
            </header>
 
-           {/* STATUS CARDS */}
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
+           {activeTab === 'dashboard' ? (
+             <div className="animate-in fade-in slide-in-from-bottom-6 duration-1000">
+               {/* STATUS CARDS */}
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
               <StatusCard 
                  label="Active Nodes" 
                  value={data.dashboard?.total_cards || 0} 
@@ -330,8 +947,33 @@ function App() {
               />
            </div>
 
+            {/* QUICK ACTIONS */}
+            <section className="mb-20">
+              <h3 className="text-2xl font-black text-[#f4f1ea] mb-8 tracking-tight">Quick Actions</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                {[
+                  { key: 'panic', label: 'Panic Mode', icon: AlertTriangle, cls: 'bg-rose-500/15 text-rose-300 border-rose-400/20', action: handlePanicMode },
+                  { key: 'game', label: 'Game Mode', icon: Zap, cls: 'bg-sky-500/15 text-sky-300 border-sky-400/20', action: () => setActiveTab('games') },
+                  { key: 'upload', label: 'Upload', icon: Upload, cls: 'bg-cyan-500/15 text-cyan-300 border-cyan-400/20', action: () => scrollToSection('ingest') },
+                  { key: 'learn', label: 'Learn', icon: Brain, cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-400/20', action: () => scrollToSection('learning-cards') },
+                  { key: 'chat', label: 'AI Chat', icon: Terminal, cls: 'bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-400/20', action: handleAIChatQuick },
+                  { key: 'progress', label: 'Progress', icon: Activity, cls: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/25', action: () => scrollToSection('progress') },
+                ].map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={item.action}
+                    className={`group rounded-3xl p-6 border ${item.cls} bg-[#0f0f11] hover:scale-[1.02] transition-all text-left`}
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-black/30 border border-white/10 flex items-center justify-center mb-4">
+                      <item.icon className="w-6 h-6" />
+                    </div>
+                    <p className="text-lg font-black">{item.label}</p>
+                  </button>
+                ))}
+              </div>
+            </section>
            {/* PRIMARY ANALYTICS GRID */}
-           <div className="grid grid-cols-1 xl:grid-cols-3 gap-10 mb-20 animate-in fade-in slide-in-from-bottom-5 duration-700">
+            <div id="progress" className="grid grid-cols-1 xl:grid-cols-3 gap-10 mb-20 animate-in fade-in slide-in-from-bottom-5 duration-700">
               
               {/* LARGE TREND CHART */}
               <div className="col-span-1 xl:col-span-2 bg-[#0a0a0b] rounded-[3.5rem] p-12 border border-white/5 relative group hover:shadow-[0_40px_100px_rgba(0,0,0,0.8)] transition-all overflow-hidden">
@@ -434,18 +1076,28 @@ function App() {
                                 className="w-full bg-[#0f0f11] border border-white/5 rounded-[2.5rem] px-10 py-6 text-xl text-[#f4f1ea] placeholder-slate-700 focus:border-[#c5a059]/30 outline-none transition-all shadow-inner font-serif"
                              />
                           </div>
+                          <div className="space-y-4">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Target Completion</label>
+                             <input
+                                type="datetime-local"
+                                value={targetCompletionAt}
+                                onChange={(e) => setTargetCompletionAt(e.target.value)}
+                                className="w-full bg-[#0f0f11] border border-white/5 rounded-[2.5rem] px-10 py-5 text-sm text-[#f4f1ea] focus:border-[#8da290]/40 outline-none transition-all shadow-inner"
+                             />
+                          </div>
 
-                          <div className="flex flex-wrap gap-4 p-2 bg-[#0f0f11] rounded-[2.5rem] border border-white/5 w-fit">
+
+                          <div className="flex flex-wrap gap-5 p-3 bg-[#0f0f11] rounded-[3rem] border border-white/5 w-fit shadow-inner">
                              {[
-                                { id: 'text', icon: Type, label: 'Textual' },
-                                { id: 'file', icon: Upload, label: 'Document' },
-                                { id: 'youtube', icon: Globe, label: 'Visual' }
+                                { id: 'text', icon: Type, label: 'Journal' },
+                                { id: 'file', icon: Upload, label: 'Manuscript' },
+                                { id: 'youtube', icon: Globe, label: 'Visual Stream' }
                              ].map((type) => (
                                 <button 
                                    key={type.id}
                                    type="button"
                                    onClick={() => setIngestType(type.id)}
-                                   className={`flex items-center gap-4 px-8 py-5 rounded-[2rem] text-xs font-black tracking-widest transition-all ${ingestType === type.id ? 'bg-[#c5a059] text-black shadow-2xl shadow-[#c5a059]/20 scale-105' : 'text-slate-500 hover:text-slate-300'}`}
+                                   className={`flex items-center gap-5 px-10 py-5 rounded-[2.5rem] text-[10px] font-black tracking-[0.2em] transition-all duration-500 ${ingestType === type.id ? 'bg-[#c5a059] text-black shadow-gold scale-105' : 'text-slate-500 hover:text-slate-300'}`}
                                 >
                                    <type.icon className="w-4 h-4" />
                                    {type.label.toUpperCase()}
@@ -516,74 +1168,132 @@ function App() {
            </section>
 
            {/* KNOWLEDGE CLUSTERS */}
-           <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-16">
-              {activeCards.map((fc) => (
-                <div key={fc.id} className="relative group">
-                   <div className="absolute inset-0 bg-[#c5a059]/0 group-hover:bg-[#c5a059]/[0.02] rounded-[4rem] transition-all duration-700 -m-8 z-0" />
-                   
-                   <div className="relative bg-[#0f0f11] rounded-[4rem] p-12 border border-white/5 shadow-2xl hover:border-[#c5a059]/20 transition-all duration-700 flex flex-col min-h-[600px] group-hover:-translate-y-3 z-10 overflow-hidden">
-                      {/* CARD BACKGROUND ART */}
-                      <div className="absolute top-0 right-0 w-40 h-40 bg-[#c5a059]/5 rounded-full blur-[80px] -mr-20 -mt-20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      
-                      <div className="flex justify-between items-start mb-12 relative z-10">
-                         <div className="flex-1 min-w-0">
-                            <h3 className="text-3xl font-black text-[#f4f1ea] font-serif hover:text-[#c5a059] transition-colors duration-500 leading-tight pr-6">{fc.topic_name}</h3>
-                            <div className="flex items-center gap-4 mt-5">
-                                <Clock className="w-4 h-4 text-[#8da290]" />
-                                <span className="text-[10px] font-black text-[#8da290] uppercase tracking-[0.2em]">
-                                   Next Synchrony: {fc.next_reminder_minutes}m
-                                </span>
-                            </div>
-                         </div>
-                         <div className={`px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-[0.3em] border shadow-2xl backdrop-blur-md ${
-                            fc.urgency_level === 'critical' ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' :
-                            fc.urgency_level === 'danger' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
-                            'bg-[#8da290]/10 text-[#8da290] border-[#8da290]/20'
-                         }`}>
-                            {fc.urgency_level}
-                         </div>
-                      </div>
-                      
-                      <p className="text-slate-400 text-xl leading-relaxed mb-12 font-serif italic opacity-70 group-hover:opacity-100 transition-opacity flex-1 line-clamp-5">
-                         "{fc.question}"
-                      </p>
+           <div id="learning-cards" className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-16">
+              {activeCards.map((fc) => {
+                 const plan = getPlanForTopic(fc.id);
+                 const currentStage = plan?.current_stage || 0;
+                 const isPlanCompleted = plan?.status === 'completed';
 
-                      {/* CHRONOS PLAN PROGRESS */}
-                      <div className="mb-12 bg-[#0a0a0b] rounded-3xl p-6 border border-white/5">
-                         <div className="flex justify-between items-center mb-4">
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Chronos Plan</span>
-                            <span className="text-[9px] font-bold text-[#c5a059] uppercase tracking-widest">Active</span>
-                         </div>
-                         <div className="flex gap-3">
-                            <div className="flex-1 h-1.5 bg-[#8da290] rounded-full shadow-[0_0_10px_#8da290]" title="Audio Summary - Complete" />
-                            <div className="flex-1 h-1.5 bg-[#8da290]/30 rounded-full overflow-hidden relative">
-                               <div className="absolute inset-0 bg-[#c5a059] w-1/2 animate-pulse" />
-                            </div>
-                            <div className="flex-1 h-1.5 bg-white/5 rounded-full" />
-                         </div>
-                         <div className="flex justify-between mt-3 px-1">
-                            <span className="text-[8px] font-black text-[#8da290] uppercase">Summary</span>
-                            <span className="text-[8px] font-black text-slate-400 uppercase">Recap</span>
-                            <span className="text-[8px] font-black text-slate-700 uppercase">Final Quiz</span>
-                         </div>
-                      </div>
-                      
-                      <div className="pt-10 border-t border-white/5 flex flex-col gap-10 relative z-10">
-                          <div className="flex justify-between items-end">
-                             <div className="flex flex-col">
-                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">Memory Strength</span>
-                                <span className={`text-6xl font-black font-serif tracking-tighter ${fc.retention_score < 50 ? 'text-rose-500' : 'text-[#8da290]'}`}>
-                                   {fc.retention_score}<span className="text-lg opacity-40 ml-1">%</span>
-                                </span>
-                             </div>
-                             <div className={`w-16 h-16 rounded-[1.5rem] bg-[#0f0f11] border-2 flex items-center justify-center transition-colors shadow-inner ${fc.retention_score < 50 ? 'border-rose-500/20' : 'border-[#8da290]/20'}`}>
-                                <Activity className={`w-7 h-7 ${fc.retention_score < 50 ? 'text-rose-500 animate-pulse' : 'text-[#8da290] opacity-50'}`} />
+                 return (
+                 <div key={fc.id} className="relative group">
+                    <div className="absolute inset-0 bg-[#c5a059]/[0.015] rounded-[4.5rem] transition-all duration-1000 -m-8 z-0" />
+                    
+                    <div className="relative bg-[#0f0f11] rounded-[4.5rem] p-12 lg:p-14 border border-white/5 shadow-3xl hover:border-[#c5a059]/10 transition-all duration-700 flex flex-col min-h-[720px] group-hover:-translate-y-2 z-10 overflow-hidden">
+                       {/* CARD BACKGROUND ART */}
+                       <div className="absolute top-0 right-0 w-80 h-80 bg-[#c5a059]/[0.04] rounded-full blur-[120px] -mr-40 -mt-40 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                       
+                       <div className="flex justify-between items-start mb-12 relative z-10">
+                          <div className="flex-1 min-w-0">
+                             <h3 className="text-4xl font-black text-[#f4f1ea] font-serif hover:text-[#c5a059] transition-colors duration-500 leading-tight pr-10">{fc.topic_name}</h3>
+                             <div className="flex items-center gap-5 mt-6">
+                                 <Clock className="w-4 h-4 text-[#8da290]" />
+                                 <span className="text-[11px] font-black text-[#8da290] uppercase tracking-[0.25em] font-serif italic opacity-70">
+                                    Next Recall: {fc.next_reminder_minutes}m
+                                 </span>
                              </div>
                           </div>
-                      </div>
-                   </div>
-                </div>
-              ))}
+                          <div className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.4em] border shadow-glow backdrop-blur-3xl transition-all duration-500 ${
+                             fc.urgency_level === 'critical' ? 'bg-rose-500/10 text-rose-500 border-rose-500/20 shadow-rose-500/5' :
+                             fc.urgency_level === 'danger' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
+                             'bg-[#8da290]/10 text-[#8da290] border-[#8da290]/20'
+                          }`}>
+                             {fc.urgency_level}
+                          </div>
+                       </div>
+                       
+                       <div className="relative mb-14 flex-1">
+                          <p className="text-slate-400 text-2xl leading-[1.8] font-serif italic opacity-85 group-hover:opacity-100 transition-opacity duration-700 line-clamp-6 pr-6">
+                             "{fc.question}"
+                          </p>
+                          
+                          {/* QUICK PLAY & ZAP BUTTONS */}
+                          <div className="absolute bottom-[-10px] right-0 translate-y-full opacity-0 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-700 flex flex-col gap-4">
+                             <button 
+                                onClick={() => handleManualTrigger(fc.id)}
+                                className="w-20 h-20 rounded-[2.5rem] bg-rose-500/10 border border-rose-500/20 flex items-center justify-center group/zap hover:bg-rose-500 hover:scale-110 active:scale-95 transition-all duration-500 shadow-2xl"
+                                title="Trigger Manual Zap (Instant Phone Notification)"
+                             >
+                                <Zap className="w-7 h-7 text-rose-500 group-hover/zap:text-white fill-current animate-pulse transition-colors" />
+                             </button>
+
+                             <button 
+                                onClick={() => playAudioSummary(fc.id, fc.summary || fc.question)}
+                                className="w-20 h-20 rounded-[2.5rem] bg-[#c5a059]/10 border border-[#c5a059]/20 flex items-center justify-center group/play hover:bg-[#c5a059] hover:scale-110 active:scale-95 transition-all duration-500 shadow-2xl"
+                                title="Synthesize Brief"
+                             >
+                                {speakingId === fc.id ? (
+                                   <Square className="w-7 h-7 text-[#c5a059] group-hover/play:text-[#0f0f11] fill-current transition-colors" />
+                                ) : (
+                                   <Play className="w-7 h-7 text-[#c5a059] group-hover/play:text-[#0f0f11] fill-current transition-colors" />
+                                )}
+                             </button>
+
+                             <button 
+                                onClick={() => handleDeleteLesson(fc.topic_name)}
+                                className="w-20 h-20 rounded-[2.5rem] bg-slate-500/10 border border-slate-500/20 flex items-center justify-center group/del hover:bg-rose-500 hover:scale-110 active:scale-95 transition-all duration-500 shadow-2xl"
+                                title="Delete this lesson"
+                             >
+                                <Trash2 className="w-7 h-7 text-slate-400 group-hover/del:text-white transition-colors" />
+                             </button>
+                          </div>
+                       </div>
+
+                       {/* CHRONOS PLAN: REAL DATA TRACKER */}
+                       <div className="mb-14 bg-white/[0.015] rounded-[3rem] p-9 border border-white/5 backdrop-blur-3xl overflow-hidden relative group/plan">
+                          <div className="flex justify-between items-center mb-6">
+                             <div className="flex items-center gap-4">
+                                <Activity className="w-4 h-4 text-[#c5a059] animate-pulse" />
+                                <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">Chronos Deployment</span>
+                             </div>
+                             <span className="text-[10px] font-bold text-[#c5a059] uppercase tracking-[0.2em] opacity-60">
+                                {isPlanCompleted ? 'Optimized' : `Level ${currentStage + 1}/3`}
+                             </span>
+                          </div>
+                          
+                          <div className="flex gap-5">
+                             {[0, 1, 2].map((stage) => (
+                                <div key={stage} className="flex-1 h-2 relative">
+                                   <div className={`absolute inset-0 rounded-full transition-all duration-1000 ${
+                                      stage < currentStage || isPlanCompleted ? 'bg-[#8da290] shadow-[0_0_20px_#8da290]' :
+                                      stage === currentStage ? 'bg-white/10 overflow-hidden' : 'bg-white/5'
+                                   }`}>
+                                      {stage === currentStage && !isPlanCompleted && (
+                                         <div className="h-full bg-[#c5a059] w-1/2 animate-pulse rounded-full shadow-[0_0_15px_#c5a059]" />
+                                      )}
+                                   </div>
+                                </div>
+                             ))}
+                          </div>
+                          
+                          <div className="flex justify-between mt-6 px-1 opacity-50 font-serif italic text-xs">
+                             <span className={currentStage >= 0 || isPlanCompleted ? 'text-[#8da290]' : 'text-slate-600'}>Audio Brief</span>
+                             <span className={currentStage >= 1 || isPlanCompleted ? 'text-[#8da290]' : 'text-slate-600'}>Deep Recap</span>
+                             <span className={currentStage >= 2 || isPlanCompleted ? 'text-[#8da290]' : 'text-slate-600'}>Proficiency Quiz</span>
+                          </div>
+                       </div>
+                       
+                       <div className="pt-10 border-t border-white/5 flex flex-col gap-10 relative z-10">
+                           <div className="flex justify-between items-end">
+                              <div className="flex flex-col">
+                                 <span className="text-[12px] font-black text-slate-600 uppercase tracking-[0.3em] mb-4">Neural Retention</span>
+                                 <div className="flex items-baseline gap-2">
+                                    <span className={`text-8xl font-black font-serif tracking-tighter transition-colors duration-700 ${fc.retention_score < 50 ? 'text-rose-500' : 'text-[#8da290]'}`}>
+                                       {fc.retention_score}
+                                    </span>
+                                    <span className="text-2xl font-bold opacity-20 text-slate-400 select-none">%</span>
+                                 </div>
+                              </div>
+                              <div className={`w-28 h-28 rounded-[2.8rem] bg-[#0f0f11] border-2 flex items-center justify-center transition-all duration-1000 shadow-glass ${
+                                 fc.retention_score < 50 ? 'border-rose-500/20 shadow-rose-500/5' : 'border-[#8da290]/20 shadow-[#8da290]/5'
+                              }`}>
+                                 <ShieldCheck className={`w-12 h-12 transition-all duration-700 ${fc.retention_score < 50 ? 'text-rose-500 opacity-20' : 'text-[#8da290] opacity-40 group-hover:opacity-80'}`} />
+                              </div>
+                           </div>
+                       </div>
+                    </div>
+                 </div>
+                 );
+               })}
            </div>
            
            {/* EMPTY STATE */}
@@ -605,10 +1315,36 @@ function App() {
                    </button>
                </div>
            )}
+             </div>
+           ) : (
+             <GameHub />
+           )}
         </div>
       </main>
+      <GameOverlay />
     </div>
   );
 }
 
 export default App;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

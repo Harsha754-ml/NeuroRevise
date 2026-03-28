@@ -1,0 +1,253 @@
+{
+  "flashcards": [
+    {
+      "id": "fc_42bd9ae7",
+      "topic_name": "Newtonian Mechanics",
+      "subject": "Physics",
+      "question": "What is Newton's Second Law of Motion?",
+      "answer": "F = ma",
+      "options": [
+        "F = m/a",
+        "F = ma",
+        "E = mc^2",
+        "P = mv"
+      ],
+      "summary": "Force equals mass times acceleration. This defines the relationship between an object's mass and the force applied to it.",
+      "created_at": 1774681333.8891864,
+      "last_reviewed": 1774681333.8891864,
+      "stability": 24.0,
+      "review_count": 0,
+      "ignore_count": 0,
+      "status": "active",
+      "audio_ready": false
+    },
+    {
+      "id": "fc_0f8efa18",
+      "topic_name": "Newtonian Mechanics",
+      "subject": "Physics",
+      "question": "What is the acceleration due to gravity on Earth?",
+      "answer": "9.8 m/s^2",
+      "options": [
+        "9.8 m/s^2",
+        "1.6 m/s^2",
+        "12.5 m/s^2",
+        "5.0 m/s^2"
+      ],
+      "summary": "Gravitational acceleration (g) is approximately 9.8 meters per second squared near the surface of the Earth.",
+      "created_at": 1774681333.8891864,
+      "last_reviewed": 1774681333.8891864,
+      "stability": 24.0,
+      "review_count": 0,
+      "ignore_count": 0,
+      "status": "active",
+      "audio_ready": false
+    },
+    {
+      "id": "fc_38540cd6",
+      "topic_name": "Thermodynamics",
+      "subject": "Physics",
+      "question": "Which law states that energy cannot be created or destroyed?",
+      "answer": "First Law of Thermodynamics",
+      "options": [
+        "First Law of Thermodynamics",
+        "Second Law of Thermodynamics",
+        "Third Law of Thermodynamics",
+        "Zeroth Law"
+      ],
+      "summary": "The First Law (Conservation of Energy) states that the total energy of an isolated system is constant.",
+      "created_at": 1774681333.8891864,
+      "last_reviewed": 1774681333.8891864,
+      "stability": 24.0,
+      "review_count": 0,
+      "ignore_count": 0,
+      "status": "active",
+      "audio_ready": false
+    },
+    {
+      "id": "fc_998169f8",
+      "topic_name": "Periodic Table",
+      "subject": "Chemistry",
+      "question": "What is the atomic number of Hydrogen?",
+      "answer": "1",
+      "options": [
+        "1",
+        "2",
+        "6",
+        "8"
+      ],
+      "summary": "Hydrogen is the first element on the periodic table, consisting of one proton and one electron.",
+      "created_at": 1774681333.8891864,
+      "last_reviewed": 1774681333.8891864,
+      "stability": 24.0,
+      "review_count": 0,
+      "ignore_count": 0,
+      "status": "active",
+      "audio_ready": false
+    },
+    {
+      "id": "fc_fb99ec97",
+      "topic_name": "Periodic Table",
+      "subject": "Chemistry",
+      "question": "What is the chemical symbol for Gold?",
+      "answer": "Au",
+      "options": [
+        "Ag",
+        "Au",
+        "Fe",
+        "Cu"
+      ],
+      "summary": "The symbol 'Au' comes from the Latin word for gold, 'aurum'.",
+      "created_at": 1774681333.8891864,
+      "last_reviewed": 1774681333.8891864,
+      "stability": 24.0,
+      "review_count": 0,
+      "ignore_count": 0,
+      "status": "active",
+      "audio_ready": false
+    },
+    {
+      "id": "fc_2dcb1b73",
+      "topic_name": "Organic Chemistry",
+      "subject": "Chemistry",
+      "question": "What is the simplest alkane?",
+      "answer": "Methane",
+      "options": [
+        "Ethane",
+        "Methane",
+        "Propane",
+        "Butane"
+      ],
+      "summary": "Methane (CH4) is the simplest alkane and the primary component of natural gas.",
+      "created_at": 1774681333.8891864,
+      "last_reviewed": 1774681333.8891864,
+      "stability": 24.0,
+      "review_count": 0,
+      "ignore_count": 0,
+      "status": "active",
+      "audio_ready": false
+    },
+    {
+      "id": "fc_aa061943",
+      "topic_name": "Calculus",
+      "subject": "Mathematics",
+      "question": "What is the derivative of sin(x)?",
+      "answer": "cos(x)",
+      "options": [
+        "-sin(x)",
+        "cos(x)",
+        "-cos(x)",
+        "tan(x)"
+      ],
+      "summary": "The instantaneous rate of change of the sine function at any point x is the cosine of x.",
+      "created_at": 1774681333.8891864,
+      "last_reviewed": 1774681333.8891864,
+      "stability": 24.0,
+      "review_count": 0,
+      "ignore_count": 0,
+      "status": "active",
+      "audio_ready": false
+    },
+    {
+      "id": "fc_b6e4d1fd",
+      "topic_name": "Calculus",
+      "subject": "Mathematics",
+      "question": "What is the integral of 1/x dx?",
+      "answer": "ln|x| + C",
+      "options": [
+        "x^2/2",
+        "ln|x| + C",
+        "e^x",
+        "log(x)"
+      ],
+      "summary": "The antiderivative of 1/x is the natural logarithm of the absolute value of x plus a constant.",
+      "created_at": 1774681333.8891864,
+      "last_reviewed": 1774681333.8891864,
+      "stability": 24.0,
+      "review_count": 0,
+      "ignore_count": 0,
+      "status": "active",
+      "audio_ready": false
+    },
+    {
+      "id": "fc_3de94051",
+      "topic_name": "Geometry",
+      "subject": "Mathematics",
+      "question": "What is the formula for the area of a circle?",
+      "answer": "\u03c0r\u00b2",
+      "options": [
+        "2\u03c0r",
+        "\u03c0r\u00b2",
+        "4\u03c0r\u00b2",
+        "\u03c0d"
+      ],
+      "summary": "Area equals Pi multiplied by the square of the radius.",
+      "created_at": 1774681333.8891864,
+      "last_reviewed": 1774681333.8891864,
+      "stability": 24.0,
+      "review_count": 0,
+      "ignore_count": 0,
+      "status": "active",
+      "audio_ready": false
+    },
+    {
+      "id": "fc_4379f9f2",
+      "topic_name": "Trigonometry",
+      "subject": "Mathematics",
+      "question": "In a right triangle, what is sin(\u03b8) equal to?",
+      "answer": "Opposite / Hypotenuse",
+      "options": [
+        "Adjacent / Hypotenuse",
+        "Opposite / Adjacent",
+        "Opposite / Hypotenuse",
+        "Hypotenuse / Opposite"
+      ],
+      "summary": "The sine of an angle is the ratio of the length of the opposite side to the hypotenuse.",
+      "created_at": 1774681333.8891864,
+      "last_reviewed": 1774681333.8891864,
+      "stability": 24.0,
+      "review_count": 0,
+      "ignore_count": 0,
+      "status": "active",
+      "audio_ready": false
+    }
+  ],
+  "events": [
+    {
+      "id": "evt_1774681333889",
+      "text": "Neural Archives reset to STEM standard (Math/Phys/Chem).",
+      "type": "info",
+      "timestamp": 1774681333.8891864
+    }
+  ],
+  "pending_notifications": [],
+  "learning_plans": [],
+  "demo_mode": false,
+  "presentation_mode": false,
+  "settings": {
+    "compression_ratio": 1440
+  },
+  "game_stats": {
+    "rapid_fire": {
+      "high_score": 0,
+      "total_played": 0
+    },
+    "match_cards": {
+      "high_score": 0,
+      "total_played": 0
+    },
+    "weak_spot": {
+      "high_score": 0,
+      "total_played": 0
+    },
+    "battle_mode": {
+      "wins": 0,
+      "losses": 0,
+      "total_played": 0
+    },
+    "panic_game": {
+      "high_score": 0,
+      "total_played": 0
+    }
+  },
+  "neuro_points": 0
+}

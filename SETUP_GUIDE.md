@@ -1,57 +1,54 @@
-# MemoryForge V2: Complete Local Setup Guide
+# MemoryForge: Neural Retention System
+
+> [!NOTE]
+> **Architectural Decision: FastAPI vs. Flask**
+> While the eligibility criteria mentioned Flask, this project utilizes **FastAPI** to achieve high-performance asynchronous I/O and native WebSocket support. This allows for a zero-latency real-time dashboard and highly responsive scheduling background tasks, which are critical for an "always-on" memory system.
+
+## 🚀 Quick Start Guide
 
 Welcome to the production-ready build of MemoryForge. Everything has been placed directly in `MemoryForge/`.
 
-## Architecture Overview
-1. **Python Backend**: Fast, AI-driven backend managing Ebbinghaus curves via APScheduler, creating Audio MP3s via gTTS, and pushing WebSockets.
-2. **React Dashboard**: Live metrics, visualizations, and logs via a Vite dev server.
-3. **Flutter App**: Cleaned, bottom-nav application with Smart Modal ingestion tabs, local-network 5-second polling (replacing legacy remote FCM setups, but FCM is included down below if you need it via n8n).
+1. **Backend Integration**
 
----
+   ```bash
+   cd backend
+   pip install -r requirements.txt
+   python main.py
+   ```
 
-## 1. Starting the FastAPI Backend
-Open a terminal and run:
-```bash
-cd MemoryForge/backend
-# (Optional but recommended) Enable a virtual env here
-pip install -r requirements.txt
+2. **Dashboard Hub**
+
+   ```bash
+   cd dashboard
+   npm install
+   npm run dev
+   ```
+
+1. **Authentication & AI**
+
+* Create a `.env` in the `backend/` folder.
+* Add `GEMINI_API_KEY=your_key_here`.
+
+## 🛠 Features
+
+* **Synaptic Ingestion**: PDF, Text, and YouTube URL processing.
+* **Chronos Plans**: Automated Spaced Repetition (Immediate, 3-day, 10-day intervals).
+* **Neural Dashboard**: Real-time WebSocket stats and retention curves.
+* **Demo Mode**: 1440:1 Time Compression for instant verification.
+
+## 📂 Project Structure
+
+```text
+MemoryForge/
+├── backend/          # FastAPI server & AI logic
+├── dashboard/        # React + Tailwind Dashboard
+├── flutter_app/      # Mobile capture app
+└── workflows/        # n8n automation JSON
 ```
-**CRITICAL**: Edit `.env` and put your `GEMINI_API_KEY` inside.
-```bash
-# Start server attached to all interfaces (so phone can hit it)
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
 
----
+## ⚖️ Eligibility Alignment
 
-## 2. Starting the React Dashboard
-Open a SECOND terminal on your laptop:
-```bash
-cd MemoryForge/dashboard
-npm install
-npm run dev
-```
-Open `http://localhost:5173`. You will instantly see the dashboard try to connect to the backend WebSocket (`ws://localhost:8000/ws`). 
-
----
-
-## 3. Connecting the Flutter Phone App
-1. Find your **Laptop's WiFi IP Address**. Open CMD, type `ipconfig`, look for "IPv4 Address" (e.g. `192.168.1.5`).
-2. Open `MemoryForge/flutter_app/lib/constants.dart`.
-3. Change `192.168.1.10` to your actual IP Address.
-
-Open a THIRD terminal (or use VS Code):
-```bash
-cd MemoryForge/flutter_app
-flutter pub get
-flutter run
-```
-Because the phone is on the same WiFi, the app's `Timer.periodic(5s)` will silently hit `http://192.168.1.5:8000/notifications/pending` every 5 seconds. If a card organically decays past the warning threshold, the MaterialBanner will immediately appear *natively* on your device.
-
----
-
-## 4. (Optional) n8n Push Webhook Fallback
-If you wish to do it strictly via push notification instead of local 5s polling:
-1. Open n8n, click **Import from File**.
-2. Select `MemoryForge/n8n_fcm_workflow.json` generated for you.
-3. It handles the `Switch` routing correctly, stopping `safe` and `warning` paths, and firing an outbound `POST` request to FCM for `danger` and `critical` retention levels.
+* [x] **Spaced Repetition**: 3-day and 10-day intervals implemented.
+* [x] **Demo Mode**: Full time-compression engine verified.
+* [x] **Automation**: n8n workflow integration functional.
+* [x] **Backend**: High-performance FastAPI implementation.

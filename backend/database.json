@@ -1,22 +1,302 @@
 {
-  "flashcards": [],
-  "events": [
+  "flashcards": [
     {
-      "id": "evt_1774637388182",
-      "text": "Demo mode: ON",
-      "type": "info",
-      "timestamp": 1774637388.1825535
+      "id": "fc_3de94051",
+      "topic_name": "Geometry",
+      "subject": "Mathematics",
+      "question": "What is the formula for the area of a circle?",
+      "answer": "\u03c0r\u00b2",
+      "options": [
+        "2\u03c0r",
+        "\u03c0r\u00b2",
+        "4\u03c0r\u00b2",
+        "\u03c0d"
+      ],
+      "summary": "Area equals Pi multiplied by the square of the radius.",
+      "created_at": 1774681333.8891864,
+      "last_reviewed": 1774697052.9499342,
+      "stability": 48.0,
+      "review_count": 1,
+      "ignore_count": 0,
+      "status": "active",
+      "audio_ready": false
     },
     {
-      "id": "evt_1774637468803",
-      "text": "Demo mode: ON",
+      "id": "fc_4379f9f2",
+      "topic_name": "Trigonometry",
+      "subject": "Mathematics",
+      "question": "In a right triangle, what is sin(\u03b8) equal to?",
+      "answer": "Opposite / Hypotenuse",
+      "options": [
+        "Adjacent / Hypotenuse",
+        "Opposite / Adjacent",
+        "Opposite / Hypotenuse",
+        "Hypotenuse / Opposite"
+      ],
+      "summary": "The sine of an angle is the ratio of the length of the opposite side to the hypotenuse.",
+      "created_at": 1774681333.8891864,
+      "last_reviewed": 1774681333.8891864,
+      "stability": 24.0,
+      "review_count": 0,
+      "ignore_count": 0,
+      "status": "active",
+      "audio_ready": false
+    }
+  ],
+  "events": [
+    {
+      "id": "evt_1774681333889",
+      "text": "Neural Archives reset to STEM standard (Math/Phys/Chem).",
       "type": "info",
-      "timestamp": 1774637468.8039982
+      "timestamp": 1774681333.8891864
+    },
+    {
+      "id": "evt_1774689284085",
+      "text": "New High Score in Rapid Fire: 120",
+      "type": "info",
+      "timestamp": 1774689284.0855162
+    },
+    {
+      "id": "evt_1774691902676",
+      "text": "Presentation mode (3m/7m) changed: True",
+      "type": "info",
+      "timestamp": 1774691902.6762195
+    },
+    {
+      "id": "evt_1774691909415",
+      "text": "Presentation mode (3m/7m) changed: False",
+      "type": "info",
+      "timestamp": 1774691909.415384
+    },
+    {
+      "id": "evt_1774691911687",
+      "text": "\u26a1 Manual Zap: Newtonian Mechanics",
+      "type": "info",
+      "timestamp": 1774691911.6870797
+    },
+    {
+      "id": "evt_1774692277330",
+      "text": "Reviewed: Newtonian Mechanics (remembered)",
+      "type": "info",
+      "timestamp": 1774692277.3305483
+    },
+    {
+      "id": "evt_1774692379254",
+      "text": "\u26a1 Manual Zap: Newtonian Mechanics",
+      "type": "info",
+      "timestamp": 1774692379.2549293
+    },
+    {
+      "id": "evt_1774692379895",
+      "text": "\u26a1 Manual Zap: Newtonian Mechanics",
+      "type": "info",
+      "timestamp": 1774692379.895267
+    },
+    {
+      "id": "evt_1774692380519",
+      "text": "\u26a1 Manual Zap: Newtonian Mechanics",
+      "type": "info",
+      "timestamp": 1774692380.519279
+    },
+    {
+      "id": "evt_1774692380786",
+      "text": "\u26a1 Manual Zap: Newtonian Mechanics",
+      "type": "info",
+      "timestamp": 1774692380.7867515
+    },
+    {
+      "id": "evt_1774692381046",
+      "text": "\u26a1 Manual Zap: Newtonian Mechanics",
+      "type": "info",
+      "timestamp": 1774692381.0467854
+    },
+    {
+      "id": "evt_1774692381274",
+      "text": "\u26a1 Manual Zap: Newtonian Mechanics",
+      "type": "info",
+      "timestamp": 1774692381.2744231
+    },
+    {
+      "id": "evt_1774692381346",
+      "text": "\u26a1 Manual Zap: Newtonian Mechanics",
+      "type": "info",
+      "timestamp": 1774692381.3462937
+    },
+    {
+      "id": "evt_1774695570883",
+      "text": "Report email updated: codenexcoding@gmail.com",
+      "type": "info",
+      "timestamp": 1774695570.8830426
+    },
+    {
+      "id": "evt_1774695586635",
+      "text": "Fallback Ingested: The algo (1 cards)",
+      "type": "info",
+      "timestamp": 1774695586.6353152
+    },
+    {
+      "id": "evt_1774695588894",
+      "text": "Chronos Plan: The algo - Stage 0 active.",
+      "type": "info",
+      "timestamp": 1774695588.8941846
+    },
+    {
+      "id": "evt_1774696288710",
+      "text": "Legacy Recall: The algo 0%",
+      "type": "info",
+      "timestamp": 1774696288.7101235
+    },
+    {
+      "id": "evt_1774696298698",
+      "text": "Legacy Recall: The algo 0%",
+      "type": "info",
+      "timestamp": 1774696298.698373
+    },
+    {
+      "id": "evt_1774696308703",
+      "text": "Legacy Recall: The algo 0%",
+      "type": "info",
+      "timestamp": 1774696308.7038171
+    },
+    {
+      "id": "evt_1774696318697",
+      "text": "Legacy Recall: The algo 0%",
+      "type": "info",
+      "timestamp": 1774696318.6970878
+    },
+    {
+      "id": "evt_1774696328706",
+      "text": "Legacy Recall: The algo 0%",
+      "type": "info",
+      "timestamp": 1774696328.7064543
+    },
+    {
+      "id": "evt_1774696765859",
+      "text": "Legacy Recall: The algo 0%",
+      "type": "info",
+      "timestamp": 1774696765.8598382
+    },
+    {
+      "id": "evt_1774696768567",
+      "text": "Deleted lesson: Newtonian Mechanics (2 cards)",
+      "type": "info",
+      "timestamp": 1774696768.567607
+    },
+    {
+      "id": "evt_1774696783190",
+      "text": "Deleted lesson: Thermodynamics (1 cards)",
+      "type": "info",
+      "timestamp": 1774696783.190599
+    },
+    {
+      "id": "evt_1774696784485",
+      "text": "Deleted lesson: Periodic Table (2 cards)",
+      "type": "info",
+      "timestamp": 1774696784.4856782
+    },
+    {
+      "id": "evt_1774696785599",
+      "text": "Deleted lesson: Organic Chemistry (1 cards)",
+      "type": "info",
+      "timestamp": 1774696785.5993729
+    },
+    {
+      "id": "evt_1774696786828",
+      "text": "Deleted lesson: Calculus (2 cards)",
+      "type": "info",
+      "timestamp": 1774696786.828613
+    },
+    {
+      "id": "evt_1774696831304",
+      "text": "\u26a1 Manual Zap: The algo",
+      "type": "info",
+      "timestamp": 1774696831.304993
+    },
+    {
+      "id": "evt_1774696832209",
+      "text": "\u26a1 Manual Zap: The algo",
+      "type": "info",
+      "timestamp": 1774696832.2093666
+    },
+    {
+      "id": "evt_1774696837553",
+      "text": "\u26a1 Manual Zap: The algo",
+      "type": "info",
+      "timestamp": 1774696837.5533135
+    },
+    {
+      "id": "evt_1774696857519",
+      "text": "Reviewed: The algo (remembered)",
+      "type": "info",
+      "timestamp": 1774696857.5199983
+    },
+    {
+      "id": "evt_1774697023824",
+      "text": "Deleted lesson: The algo (1 cards)",
+      "type": "info",
+      "timestamp": 1774697023.8241436
+    },
+    {
+      "id": "evt_1774697031009",
+      "text": "\u26a1 Manual Zap: Geometry",
+      "type": "info",
+      "timestamp": 1774697031.0091908
+    },
+    {
+      "id": "evt_1774697032686",
+      "text": "\u26a1 Manual Zap: Geometry",
+      "type": "info",
+      "timestamp": 1774697032.6865933
+    },
+    {
+      "id": "evt_1774697053003",
+      "text": "Reviewed: Geometry (remembered)",
+      "type": "info",
+      "timestamp": 1774697053.003462
+    },
+    {
+      "id": "evt_1774697339253",
+      "text": "\u26a1 Manual Zap: Trigonometry",
+      "type": "info",
+      "timestamp": 1774697339.2538912
+    },
+    {
+      "id": "evt_1774697341181",
+      "text": "\u26a1 Manual Zap: Trigonometry",
+      "type": "info",
+      "timestamp": 1774697341.1814687
     }
   ],
   "pending_notifications": [],
-  "demo_mode": true,
+  "learning_plans": [],
+  "demo_mode": false,
+  "presentation_mode": false,
   "settings": {
-    "compression_ratio": 1440
-  }
+    "compression_ratio": 1440,
+    "report_email": "codenexcoding@gmail.com"
+  },
+  "game_stats": {
+    "rapid_fire": {
+      "high_score": 120,
+      "total_played": 1
+    },
+    "match_cards": {
+      "high_score": 0,
+      "total_played": 0
+    },
+    "weak_spot": {
+      "high_score": 0,
+      "total_played": 0
+    },
+    "battle_mode": {
+      "wins": 0,
+      "losses": 0,
+      "total_played": 0
+    },
+    "panic_game": {
+      "high_score": 0,
+      "total_played": 0
+    }
+  },
+  "neuro_points": 12
 }

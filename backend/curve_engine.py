@@ -48,8 +48,8 @@ def get_next_reminder_minutes(stability: float, demo_mode: bool) -> int:
 
 def get_curve_points(last_reviewed: float, stability: float, demo_mode: bool):
     # Generates a visual 20-point tracking curve
-    # Spans 48 simulated hours
-    total_sim_hours = 48.0
+    # Spans 240 simulated hours (10 days)
+    total_sim_hours = 240.0
     # True passage of time needed to reach that point
     time_chunk_hours = total_sim_hours / 20.0
     
@@ -73,9 +73,12 @@ def get_curve_points(last_reviewed: float, stability: float, demo_mode: bool):
         r = math.exp(-t_hours / stability)
         score = int(r * 100)
         
-        # Generate readable label (+X hours)
+        # Generate readable label (+X days or hours)
         simulated_hour = int(i * time_chunk_hours)
-        label = f"+{simulated_hour}h"
+        if simulated_hour >= 24:
+            label = f"+{simulated_hour // 24}d"
+        else:
+            label = f"+{simulated_hour}h"
         
         points.append({
             "label": label,

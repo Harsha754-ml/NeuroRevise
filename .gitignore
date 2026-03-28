@@ -1,0 +1,39 @@
+# General
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+.env
+.env.*
+
+# Python / Backend
+backend/__pycache__/
+backend/*.py[cod]
+backend/*$py.class
+backend/venv/
+backend/env/
+backend/.venv/
+.venv/
+backend/uploads/
+backend/database.json
+
+# Node / Dashboard
+dashboard/node_modules/
+dashboard/dist/
+dashboard/build/
+dashboard/.next/
+
+# Flutter / App
+flutter_app/.dart_tool/
+flutter_app/.packages
+flutter_app/build/
+flutter_app/.flutter-plugins
+flutter_app/.flutter-plugins-dependencies
+
+# Integrations
+n8n_data/
+coverage/
+
+# Specific project exlucsions
+remix-of-neurorevise-ai/

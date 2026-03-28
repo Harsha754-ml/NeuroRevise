@@ -19,7 +19,8 @@
       "review_count": 1,
       "ignore_count": 0,
       "status": "active",
-      "audio_ready": false
+      "audio_ready": false,
+      "notified_once": true
     },
     {
       "id": "fc_4379f9f2",
@@ -35,12 +36,37 @@
       ],
       "summary": "The sine of an angle is the ratio of the length of the opposite side to the hypotenuse.",
       "created_at": 1774681333.8891864,
-      "last_reviewed": 1774681333.8891864,
+      "last_reviewed": 1774698685.1503634,
+      "stability": 48.0,
+      "review_count": 1,
+      "ignore_count": 0,
+      "status": "active",
+      "audio_ready": false,
+      "notified_once": true
+    },
+    {
+      "id": "fc_c6e64f4c",
+      "topic_name": "the Algorithm of the design",
+      "question": "What is key point 1 from the Algorithm of the design?",
+      "answer": "something about the things in the code which works in logic",
+      "options": [
+        "something about the things in the code which works in logic",
+        "Not this: the Algorithm of the design",
+        "Needs more review",
+        "Unrelated concept"
+      ],
+      "subject": "the Algorithm of the",
+      "source_type": "fallback_ingest",
+      "created_at": 1774699111.877501,
+      "last_reviewed": 0,
       "stability": 24.0,
       "review_count": 0,
       "ignore_count": 0,
       "status": "active",
-      "audio_ready": false
+      "summary": "Key takeaway: something about the things in the code which works",
+      "audio_ready": true,
+      "notified_once": true,
+      "target_completion_at": 1774958280.0
     }
   ],
   "events": [
@@ -265,10 +291,122 @@
       "text": "\u26a1 Manual Zap: Trigonometry",
       "type": "info",
       "timestamp": 1774697341.1814687
+    },
+    {
+      "id": "evt_1774698573631",
+      "text": "\u26a1 Manual Zap: Trigonometry",
+      "type": "info",
+      "timestamp": 1774698573.63167
+    },
+    {
+      "id": "evt_1774698669062",
+      "text": "Demo mode changed: True",
+      "type": "info",
+      "timestamp": 1774698669.0622919
+    },
+    {
+      "id": "evt_1774698671560",
+      "text": "Legacy Recall: Geometry 0%",
+      "type": "info",
+      "timestamp": 1774698671.560071
+    },
+    {
+      "id": "evt_1774698671616",
+      "text": "Legacy Recall: Trigonometry 0%",
+      "type": "info",
+      "timestamp": 1774698671.616976
+    },
+    {
+      "id": "evt_1774698685172",
+      "text": "Reviewed: Trigonometry (remembered)",
+      "type": "info",
+      "timestamp": 1774698685.1729124
+    },
+    {
+      "id": "evt_1774698687974",
+      "text": "Demo mode changed: True",
+      "type": "info",
+      "timestamp": 1774698687.974874
+    },
+    {
+      "id": "evt_1774698688695",
+      "text": "Demo mode changed: False",
+      "type": "info",
+      "timestamp": 1774698688.6952195
+    },
+    {
+      "id": "evt_1774698717290",
+      "text": "\u26a1 Manual Zap: Geometry",
+      "type": "info",
+      "timestamp": 1774698717.2906387
+    },
+    {
+      "id": "evt_1774698718294",
+      "text": "\u26a1 Manual Zap: Geometry",
+      "type": "info",
+      "timestamp": 1774698718.2947805
+    },
+    {
+      "id": "evt_1774698718733",
+      "text": "\u26a1 Manual Zap: Geometry",
+      "type": "info",
+      "timestamp": 1774698718.7334871
+    },
+    {
+      "id": "evt_1774699112893",
+      "text": "Fallback Ingested: the Algorithm of the design (1 cards)",
+      "type": "info",
+      "timestamp": 1774699112.8932488
+    },
+    {
+      "id": "evt_1774699118370",
+      "text": "Chronos Plan: the Algorithm of the design - Stage 0 active.",
+      "type": "info",
+      "timestamp": 1774699118.370661
+    },
+    {
+      "id": "evt_1774699121586",
+      "text": "Legacy Recall: the Algorithm of the design 0%",
+      "type": "info",
+      "timestamp": 1774699121.5862114
     }
   ],
   "pending_notifications": [],
-  "learning_plans": [],
+  "learning_plans": [
+    {
+      "topic_id": "topic_04c5c570",
+      "topic_name": "the Algorithm of the design",
+      "created_at": 1774699111.8820398,
+      "status": "active",
+      "current_stage": 1,
+      "steps": [
+        {
+          "stage": 0,
+          "type": "audio_summary",
+          "title": "Immediate Synthesis",
+          "content": "Audio summary for the Algorithm of the design is ready for review.",
+          "due_at": 1774699111.8820398,
+          "status": "completed"
+        },
+        {
+          "stage": 1,
+          "type": "text_recap",
+          "title": "Synaptic Calibration",
+          "content": "Recapping the Algorithm of the design: What is key point 1 from the Algorithm of the design?",
+          "due_at": 1774958311.8820398,
+          "status": "pending"
+        },
+        {
+          "stage": 2,
+          "type": "quiz",
+          "title": "The Knowledge Litmus",
+          "content": "Final challenge for the Algorithm of the design.",
+          "due_at": 1775563111.8820398,
+          "status": "pending"
+        }
+      ]
+    }
+  ],
   "demo_mode": false,
   "presentation_mode": false,
   "settings": {
@@ -278,7 +416,7 @@
   "game_stats": {
     "rapid_fire": {
       "high_score": 120,
-      "total_played": 1
+      "total_played": 2
     },
     "match_cards": {
       "high_score": 0,
@@ -298,5 +436,14 @@
       "total_played": 0
     }
   },
-  "neuro_points": 12
+  "neuro_points": 22,
+  "uploaded_contexts": [
+    {
+      "id": "ctx_1774699110253",
+      "topic_name": "the Algorithm of the design",
+      "source_type": "text_upload",
+      "content": "something about the things in the code which works in logic",
+      "created_at": 1774699110.253524
+    }
+  ]
 }

@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/Mobile-Flutter-02569B.svg?logo=flutter" alt="Flutter">
   <br>
   <h1>🧠 NeuroRevise</h1>
-  <h3>Adaptive Memory Retention & Reminder System</h3>
+  <h3>Adaptive Memory Retention & Reminder System.</h3>
 </div>
 
 <br/>

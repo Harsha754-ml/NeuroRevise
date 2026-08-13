@@ -8,7 +8,7 @@
   <h3>Adaptive Memory Retention & Reminder System.</h3>
 </div>
 
-<br/>
+<br/>.
 
 **MemoryForge** is an advanced autonomous learning companion designed to combat the "forgetting curve." By intelligently ingesting study materials (PDFs, text, YouTube videos) and generating spaced-repetition schedules, MemoryForge ensures you retain information when it matters most.
 
